@@ -364,7 +364,7 @@ async function executeDebugStep3() {
     // Mettre à jour la commande
     const commandDiv = document.getElementById('command-step3');
     if (commandDiv) {
-        commandDiv.innerHTML = `<code>>>> "${word}" in bloom</code>`;
+        commandDiv.innerHTML = `<code>>>> bloom.__contains__("${word}")</code>`;
     }
     
     // Highlight: Appel de __contains__
