@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtre de Bloom - Présentation Interactive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- MathJax pour le rendu LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slide 1: Introduction -->
+        <div class="slide active" id="slide1">
+            <h1 class="slide-title">Filtre de Bloom</h1>
+            <h2 class="slide-subtitle">Structure de données probabiliste</h2>
+            
+            <div class="slide1-layout">
+                <!-- Colonne gauche : Histoire + Schéma -->
+                <div class="left-column">
+                    <div class="history-banner">
+                        <div class="history-content">
+                            <div class="history-icon">👨‍🔬</div>
+                            <div class="history-text">
+                                <h3>📜 Histoire</h3>
+                                <p><strong>Burton Howard Bloom</strong> (1970) - Informaticien américain</p>
+                                <p>Créé pour résoudre un problème de <strong>limitation de mémoire</strong> dans les systèmes de vérification orthographique. 
+                                À l'époque, stocker des dictionnaires entiers en mémoire était coûteux. Bloom a eu l'idée révolutionnaire d'utiliser 
+                                des <strong>fonctions de hachage multiples</strong> et un <strong>tableau de bits</strong> pour créer une représentation 
+                                compacte acceptant un petit taux d'erreur contrôlé.</p>
+                                <p class="history-quote">💡 <em>"Accepter quelques faux positifs pour gagner 10x-100x en mémoire"</em></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="visual-diagram">
+                        <div class="bloom-schema">
+                            <div class="element">Élément</div>
+                            <div class="arrow">→</div>
+                            <div class="hash-functions">
+                                <div class="hash">h₁</div>
+                                <div class="hash">h₂</div>
+                                <div class="hash">h₃</div>
+                            </div>
+                            <div class="arrow">→</div>
+                            <div class="bitarray">
+                                <span class="bit">0</span>
+                                <span class="bit active">1</span>
+                                <span class="bit">0</span>
+                                <span class="bit active">1</span>
+                                <span class="bit">0</span>
+                                <span class="bit active">1</span>
+                                <span class="bit">0</span>
+                                <span class="bit">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Colonne droite : Infos en grille compacte -->
+                <div class="right-column">
+                    <div class="info-box">
+                        <h3>📌 Objectif</h3>
+                        <p>Tester rapidement l'appartenance d'un élément à un ensemble avec une empreinte mémoire minimale</p>
+                    </div>
+                    
+                    <div class="info-box">
+                        <h3>✅ Avantages</h3>
+                        <ul>
+                            <li>Très économe en mémoire</li>
+                            <li>Temps de recherche constant O(k)</li>
+                            <li>Aucun faux négatif</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-box">
+                        <h3>⚠️ Inconvénient</h3>
+                        <ul>
+                            <li>Faux positifs possibles</li>
+                            <li>Pas de suppression (standard)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-box">
+                        <h3>🎯 Applications</h3>
+                        <ul>
+                            <li>Cache web (éviter requêtes inutiles)</li>
+                            <li>Vérification de mots de passe compromis</li>
+                            <li>Bases de données distribuées</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Fonctionnement -->
+        <div class="slide" id="slide2">
+            <h1 class="slide-title">Fonctionnement</h1>
+            <h2 class="slide-subtitle">Ajout et recherche d'éléments</h2>
+            
+            <div class="slide2-layout">
+                <!-- Partie gauche : Paramètres + Exemple -->
+                <div class="slide2-left">
+                    <!-- Paramètres d'entrée -->
+                    <div class="params-banner">
+                        <h3>🎛️ Paramètres d'entrée</h3>
+                        <div class="params-grid">
+                            <div class="param-item">
+                                <span class="param-name">n</span>
+                                <span class="param-desc">Capacité</span>
+                            </div>
+                            <div class="param-arrow">→</div>
+                            <div class="param-item">
+                                <span class="param-name">p</span>
+                                <span class="param-desc">Taux erreur</span>
+                            </div>
+                            <div class="param-arrow">⇒</div>
+                            <div class="param-result">
+                                <div class="param-output">
+                                    <span class="param-name">m</span>
+                                    <span class="param-desc">Taille bits</span>
+                                </div>
+                                <div class="param-output">
+                                    <span class="param-name">k</span>
+                                    <span class="param-desc">Nb hash</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Exemple concret -->
+                    <div class="concrete-example">
+                        <h3>📝 Exemple : "chat", "chien", "oiseau"</h3>
+                        <p class="example-params">n=10, p=0.1 → <strong>m=16, k=3</strong></p>
+                        
+                        <div class="unified-example">
+                            <!-- Tableau de hachages -->
+                            <div class="hash-table">
+                                <div class="hash-row">
+                                    <span class="word-label chat">🐱 chat</span>
+                                    <div class="hash-values">
+                                        <span class="hash-badge chat">h₁=2</span>
+                                        <span class="hash-badge chat">h₂=7</span>
+                                        <span class="hash-badge chat">h₃=11</span>
+                                    </div>
+                                </div>
+                                <div class="hash-row">
+                                    <span class="word-label chien">🐕 chien</span>
+                                    <div class="hash-values">
+                                        <span class="hash-badge chien">h₁=5</span>
+                                        <span class="hash-badge chien">h₂=7</span>
+                                        <span class="hash-badge chien">h₃=14</span>
+                                    </div>
+                                </div>
+                                <div class="hash-row">
+                                    <span class="word-label oiseau">🐦 oiseau</span>
+                                    <div class="hash-values">
+                                        <span class="hash-badge oiseau">h₁=0</span>
+                                        <span class="hash-badge oiseau">h₂=9</span>
+                                        <span class="hash-badge oiseau">h₃=11</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tableau de bits unique -->
+                            <div class="unified-bitarray">
+                                <div class="bitarray-indices">
+                                    <span class="idx">0</span>
+                                    <span class="idx">1</span>
+                                    <span class="idx">2</span>
+                                    <span class="idx">3</span>
+                                    <span class="idx">4</span>
+                                    <span class="idx">5</span>
+                                    <span class="idx">6</span>
+                                    <span class="idx">7</span>
+                                    <span class="idx">8</span>
+                                    <span class="idx">9</span>
+                                    <span class="idx">10</span>
+                                    <span class="idx">11</span>
+                                    <span class="idx">12</span>
+                                    <span class="idx">13</span>
+                                    <span class="idx">14</span>
+                                    <span class="idx">15</span>
+                                </div>
+                                <div class="bitarray-values">
+                                    <span class="bit active oiseau" title="oiseau">1</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit active chat" title="chat">1</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit active chien" title="chien">1</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit active collision" title="chat + chien">1</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit active oiseau" title="oiseau">1</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit active collision" title="chat + oiseau">1</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit">0</span>
+                                    <span class="bit active chien" title="chien">1</span>
+                                    <span class="bit">0</span>
+                                </div>
+                                <div class="bitarray-legend">
+                                    <span class="legend-item"><span class="color-box chat"></span> Chat</span>
+                                    <span class="legend-item"><span class="color-box chien"></span> Chien</span>
+                                    <span class="legend-item"><span class="color-box oiseau"></span> Oiseau</span>
+                                    <span class="legend-item"><span class="color-box collision"></span> Collision</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Partie droite : 3 cas de test en vertical -->
+                <div class="slide2-right">
+                    <h3 class="test-title">🧪 3 Cas de Test</h3>
+                    
+                    <!-- Cas 1 : Trouvé -->
+                    <div class="test-case success">
+                        <div class="case-header">
+                            <span class="case-icon">✅</span>
+                            <span class="case-title">Test: "chat"</span>
+                        </div>
+                        <div class="case-body">
+                            <p class="case-check">h₁=2, h₂=7, h₃=11</p>
+                            <div class="case-bits">
+                                <span class="check-bit ok">bit[2]=1 ✓</span>
+                                <span class="check-bit ok">bit[7]=1 ✓</span>
+                                <span class="check-bit ok">bit[11]=1 ✓</span>
+                            </div>
+                            <p class="case-result success-result"><strong>Probablement présent</strong> ✅</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cas 2 : Non trouvé -->
+                    <div class="test-case absent">
+                        <div class="case-header">
+                            <span class="case-icon">❌</span>
+                            <span class="case-title">Test: "lapin"</span>
+                        </div>
+                        <div class="case-body">
+                            <p class="case-check">h₁=3, h₂=8, h₃=13</p>
+                            <div class="case-bits">
+                                <span class="check-bit fail">bit[3]=0 ✗</span>
+                                <span class="check-bit">bit[8]=0</span>
+                                <span class="check-bit">bit[13]=0</span>
+                            </div>
+                            <p class="case-result absent-result"><strong>Certainement absent</strong> ❌</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cas 3 : Faux positif -->
+                    <div class="test-case false-positive">
+                        <div class="case-header">
+                            <span class="case-icon">⚠️</span>
+                            <span class="case-title">Test: "renard"</span>
+                        </div>
+                        <div class="case-body">
+                            <p class="case-check">h₁=0, h₂=7, h₃=14</p>
+                            <div class="case-bits">
+                                <span class="check-bit ok">bit[0]=1 ✓</span>
+                                <span class="check-bit ok">bit[7]=1 ✓</span>
+                                <span class="check-bit ok">bit[14]=1 ✓</span>
+                            </div>
+                            <p class="case-result fp-result"><strong>FAUX POSITIF</strong> ⚠️<br>
+                            <small>(jamais ajouté mais bits à 1 par collision)</small></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Formules et Probabilités -->
+        <div class="slide" id="slide3">
+            <h1 class="slide-title">Formules et Probabilités</h1>
+            
+            <div class="slide3-layout">
+                <!-- Colonne gauche : Démonstration -->
+                <div class="slide3-left">
+                    <div class="demonstration-section">
+                        <h3>🔬 Démonstration : Probabilité de faux positif</h3>
+                        
+                        <div class="demo-step">
+                            <p class="step-label">1️⃣ Probabilité qu'un bit reste à 0 après un hachage :</p>
+                            <p class="formula">$$P(\text{bit = 0 après 1 hash}) = 1 - \frac{1}{m}$$</p>
+                        </div>
+                        
+                        <div class="demo-step">
+                            <p class="step-label">2️⃣ Après insertion de <em>n</em> éléments avec <em>k</em> fonctions de hachage :</p>
+                            <p class="formula">$$P(\text{bit = 0}) = \left(1 - \frac{1}{m}\right)^{kn}$$</p>
+                        </div>
+                        
+                        <div class="demo-step">
+                            <p class="step-label">3️⃣ Quand m est grand, approximation par exp :</p>
+                            <p class="formula">$$\lim_{m \to \infty} \left(1 - \frac{1}{m}\right)^{kn} = e^{-\frac{kn}{m}}$$</p>
+                        </div>
+                        
+                        <div class="demo-step">
+                            <p class="step-label">4️⃣ Probabilité qu'un bit soit à 1 :</p>
+                            <p class="formula">$$P(\text{bit = 1}) = 1 - e^{-\frac{kn}{m}}$$</p>
+                        </div>
+                        
+                        <div class="demo-step highlight">
+                            <p class="step-label">5️⃣ Faux positif = tous les k bits testés sont à 1 :</p>
+                            <p class="formula">$$P_{fp} = \left(1 - e^{-\frac{kn}{m}}\right)^k$$</p>
+                        </div>
+                    </div>
+                    
+                    <div class="formulas-compact">
+                        <div class="formula-mini">
+                            <strong>Taille optimale :</strong> $m = \frac{-n \ln(p)}{(\ln 2)^2}$
+                        </div>
+                        <div class="formula-mini">
+                            <strong>k optimal :</strong> $k = \frac{m}{n} \ln(2)$
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Colonne droite : Calculateur interactif -->
+                <div class="slide3-right">
+                    <div class="interactive-calculator">
+                        <h3>🎛️ Calculateur interactif</h3>
+                        
+                        <div class="slider-group">
+                            <label>
+                                Nombre d'éléments (n): <span id="n-value">1000</span>
+                            </label>
+                            <input type="range" id="n-slider" min="100" max="10000" step="100" value="1000">
+                        </div>
+                        
+                        <div class="slider-group">
+                            <label>
+                                Taux d'erreur (p): <span id="p-value">0.01</span>
+                            </label>
+                            <input type="range" id="p-slider" min="0.001" max="0.1" step="0.001" value="0.01">
+                        </div>
+                        
+                        <div class="results-grid">
+                            <div class="result-box">
+                                <div class="result-label">Taille (m)</div>
+                                <div class="result-value" id="result-m">-</div>
+                                <div class="result-unit">bits</div>
+                            </div>
+                            <div class="result-box">
+                                <div class="result-label">Fonctions (k)</div>
+                                <div class="result-value" id="result-k">-</div>
+                            </div>
+                            <div class="result-box">
+                                <div class="result-label">Mémoire</div>
+                                <div class="result-value" id="result-memory">-</div>
+                                <div class="result-unit">KB</div>
+                            </div>
+                            <div class="result-box highlight-result">
+                                <div class="result-label">P(faux positif)</div>
+                                <div class="result-value" id="result-fp">-</div>
+                                <div class="result-unit">%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="interpretation">
+                            <p><strong>💡 Interprétation :</strong></p>
+                            <p id="interpretation-text">Ajustez les paramètres pour voir l'impact sur la probabilité de faux positif.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Analyse Mémoire -->
+        <div class="slide" id="slide4">
+            <h1 class="slide-title">Analyse Mémoire et Vitesse</h1>
+            
+            <div class="slide4-new-layout">
+                <!-- Ligne 1 : Explication + Tableau comparatif -->
+                <div class="slide4-top">
+                    <!-- Explication du gain mémoire -->
+                    <div class="memory-explanation">
+                        <h3>🧠 Pourquoi cette économie de mémoire ?</h3>
+                        <div class="explanation-content">
+                            <div class="explanation-text">
+                                <p>Le <strong>BloomFilter</strong> ne stocke pas les éléments eux-mêmes, mais seulement un <strong>tableau de bits</strong>.</p>
+                                <p>Sa taille dépend du <strong>taux d'erreur choisi (p)</strong> :</p>
+                                <p class="formula-inline">$m = \frac{-n \ln(p)}{(\ln 2)^2}$ bits</p>
+                                <p class="key-insight">💡 Plus on tolère d'erreurs, moins on utilise de mémoire !</p>
+                            </div>
+                            <div class="explanation-visual">
+                                <div class="struct-box hashset-struct">
+                                    <div class="struct-title">HashSet</div>
+                                    <div class="struct-item">🔑 "python" → 50 bytes</div>
+                                    <div class="struct-item">🔑 "java" → 50 bytes</div>
+                                    <div class="struct-item">🔑 "rust" → 50 bytes</div>
+                                    <div class="struct-total">≈ 150 bytes pour 3 mots</div>
+                                </div>
+                                <div class="struct-box bloom-struct">
+                                    <div class="struct-title">BloomFilter</div>
+                                    <div class="struct-item">🎯 BitSet[64] = 8 bytes</div>
+                                    <div class="struct-item">✅ Contient les 3 mots</div>
+                                    <div class="struct-total">≈ 8 bytes total</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tableau comparatif amélioré -->
+                    <div class="comparison-table-enhanced">
+                        <h3>📊 Tableau comparatif complet</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Structure</th>
+                                    <th>Mémoire/élément</th>
+                                    <th>Faux positifs</th>
+                                    <th>Suppression</th>
+                                    <th>Complexité</th>
+                                    <th>Vitesse</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hashset-row">
+                                    <td><strong>HashSet</strong></td>
+                                    <td>50-100 bytes</td>
+                                    <td>❌ Non</td>
+                                    <td>✅ Oui</td>
+                                    <td>O(1) amorti</td>
+                                    <td>0.1-1 ms</td>
+                                </tr>
+                                <tr class="bloom-row">
+                                    <td><strong>BloomFilter</strong></td>
+                                    <td>10-20 bits</td>
+                                    <td>✅ Oui (p)</td>
+                                    <td>❌ Non</td>
+                                    <td>O(k) constant</td>
+                                    <td>0.02 ms ⚡</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Ligne 2 : Graphiques -->
+                <div class="slide4-middle">
+                    <!-- Graphique 1 : Impact du taux d'erreur -->
+                    <div class="chart-container">
+                        <h3>📉 Impact du taux d'erreur (p) sur la mémoire</h3>
+                        <canvas id="memoryErrorChart"></canvas>
+                        <p class="chart-caption">Plus p est petit, plus on a besoin de bits par élément</p>
+                    </div>
+                    
+                    <!-- Graphique 2 : Temps de recherche -->
+                    <div class="chart-container">
+                        <h3>⚡ Temps de recherche selon le volume</h3>
+                        <canvas id="speedComparisonChart"></canvas>
+                        <p class="chart-caption">Le BloomFilter reste constant O(k) grâce au cache CPU</p>
+                    </div>
+                    
+                    <!-- Section Performance -->
+                    <div class="performance-box">
+                        <h3>🚀 Pourquoi si rapide ?</h3>
+                        <div class="perf-reasons">
+                            <div class="perf-item">
+                                <span class="perf-icon">💾</span>
+                                <div>
+                                    <strong>Cache CPU</strong>
+                                    <p>Le BitSet entier tient souvent en cache L2/L3</p>
+                                </div>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-icon">🎯</span>
+                                <div>
+                                    <strong>Accès direct</strong>
+                                    <p>k accès mémoire prédictibles (pas de parcours)</p>
+                                </div>
+                            </div>
+                            <div class="perf-item">
+                                <span class="perf-icon">⚡</span>
+                                <div>
+                                    <strong>Operations binaires</strong>
+                                    <p>Test de bits ultra-rapide en hardware</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ligne 3 : Limites et Synthèse -->
+                <div class="slide4-bottom">
+                    <!-- Limites -->
+                    <div class="limits-box">
+                        <h3>⚠️ Limites et remarques</h3>
+                        <div class="limits-grid">
+                            <div class="limit-item">
+                                <span class="limit-icon">❌</span>
+                                <strong>Pas de suppression</strong>
+                                <p>Impossible sans Counting Bloom Filter</p>
+                            </div>
+                            <div class="limit-item">
+                                <span class="limit-icon">⚠️</span>
+                                <strong>Faux positifs</strong>
+                                <p>Proportion contrôlée par p</p>
+                            </div>
+                            <div class="limit-item">
+                                <span class="limit-icon">📊</span>
+                                <strong>Saturation</strong>
+                                <p>Inefficace si >70% des bits à 1</p>
+                            </div>
+                            <div class="limit-item">
+                                <span class="limit-icon">🔢</span>
+                                <strong>Capacité fixe</strong>
+                                <p>Redimensionnement coûteux</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Synthèse finale -->
+                    <div class="final-synthesis">
+                        <div class="synth-item">
+                            <span class="synth-icon">�</span>
+                            <div class="synth-value">~40×</div>
+                            <div class="synth-label">moins de mémoire</div>
+                        </div>
+                        <div class="synth-item">
+                            <span class="synth-icon">⚡</span>
+                            <div class="synth-value">~50×</div>
+                            <div class="synth-label">plus rapide</div>
+                        </div>
+                        <div class="synth-item">
+                            <span class="synth-icon">📊</span>
+                            <div class="synth-value">O(k)</div>
+                            <div class="synth-label">complexité constante</div>
+                        </div>
+                        <div class="synth-item">
+                            <span class="synth-icon">🎯</span>
+                            <div class="synth-value">≈ p</div>
+                            <div class="synth-label">taux de faux positifs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Démonstration Interactive (Mode Debug) -->
+        <div class="slide" id="slide5">
+            <h1 class="slide-title">🐛 Démonstration Interactive - Mode Debug</h1>
+            
+            <div class="debugger-layout">
+                <!-- GAUCHE : Code complet de bloom.py -->
+                <div class="source-code-panel">
+                    <h3>📄 bloom.py (Code Source Complet)</h3>
+                    <pre class="full-source-code" id="full-source-code"><code><span class="line" data-line="1">class BitSet:</span>
+<span class="line" data-line="2">    def __init__(self, size: int):</span>
+<span class="line" data-line="3">        if size <= 0:</span>
+<span class="line" data-line="4">            raise ValueError("La taille doit être > 0")</span>
+<span class="line" data-line="5">        self.size = size</span>
+<span class="line" data-line="6">        self.array = bytearray((size + 7) // 8)</span>
+<span class="line" data-line="7"></span>
+<span class="line" data-line="8">    def _check_index(self, index: int):</span>
+<span class="line" data-line="9">        if not (0 <= index < self.size):</span>
+<span class="line" data-line="10">            raise IndexError("Index hors limites")</span>
+<span class="line" data-line="11"></span>
+<span class="line" data-line="12">    def set(self, index: int):</span>
+<span class="line" data-line="13">        """Met le bit à 1"""</span>
+<span class="line" data-line="14">        self._check_index(index)</span>
+<span class="line" data-line="15">        byte_index = index // 8</span>
+<span class="line" data-line="16">        mask = 1 << (index % 8)</span>
+<span class="line" data-line="17">        self.array[byte_index] |= mask</span>
+<span class="line" data-line="18"></span>
+<span class="line" data-line="19">    def get(self, index: int) -> bool:</span>
+<span class="line" data-line="20">        """Retourne True si le bit est à 1"""</span>
+<span class="line" data-line="21">        self._check_index(index)</span>
+<span class="line" data-line="22">        byte_index = index // 8</span>
+<span class="line" data-line="23">        mask = 1 << (index % 8)</span>
+<span class="line" data-line="24">        return (self.array[byte_index] & mask) != 0</span>
+<span class="line" data-line="25"></span>
+<span class="line" data-line="26">    def clear(self, index: int):</span>
+<span class="line" data-line="27">        """Met le bit à 0"""</span>
+<span class="line" data-line="28">        self._check_index(index)</span>
+<span class="line" data-line="29">        byte_index = index // 8</span>
+<span class="line" data-line="30">        mask = 1 << (index % 8)</span>
+<span class="line" data-line="31">        self.array[byte_index] &= ~mask</span>
+<span class="line" data-line="32"></span>
+<span class="line" data-line="33">    def clear_all(self):</span>
+<span class="line" data-line="34">        """Remet tout à 0"""</span>
+<span class="line" data-line="35">        for i in range(len(self.array)):</span>
+<span class="line" data-line="36">            self.array[i] = 0</span>
+<span class="line" data-line="37"></span>
+<span class="line" data-line="38"></span>
+<span class="line" data-line="39">import math, hashlib</span>
+<span class="line" data-line="40"></span>
+<span class="line" data-line="41">class BloomFilter:</span>
+<span class="line" data-line="42">    def __init__(self, capacity: int, error_rate: float):</span>
+<span class="line" data-line="43">        if capacity <= 0:</span>
+<span class="line" data-line="44">            raise ValueError("Capacity doit être > 0")</span>
+<span class="line" data-line="45">        if not (0 < error_rate < 1):</span>
+<span class="line" data-line="46">            raise ValueError("Error_rate doit être entre 0 et 1")</span>
+<span class="line" data-line="47"></span>
+<span class="line" data-line="48">        self.capacity = capacity</span>
+<span class="line" data-line="49">        self.error_rate = error_rate</span>
+<span class="line" data-line="50"></span>
+<span class="line" data-line="51">        # Taille en bits (m) et nombre de hash (k)</span>
+<span class="line" data-line="52">        self.m = math.ceil(-capacity * math.log(error_rate) / (math.log(2) ** 2))</span>
+<span class="line" data-line="53">        self.k = max(1, round(self.m / capacity * math.log(2)))</span>
+<span class="line" data-line="54"></span>
+<span class="line" data-line="55">        # BitSet sous-jacent</span>
+<span class="line" data-line="56">        self.bitset = BitSet(self.m)</span>
+<span class="line" data-line="57">        self.count = 0</span>
+<span class="line" data-line="58"></span>
+<span class="line" data-line="59">    def _hashes(self, item: str):</span>
+<span class="line" data-line="60">        """Double hashing pour générer k indices"""</span>
+<span class="line" data-line="61">        if isinstance(item, str):</span>
+<span class="line" data-line="62">            data = item.encode("utf-8")</span>
+<span class="line" data-line="63">        elif isinstance(item, bytes):</span>
+<span class="line" data-line="64">            data = item</span>
+<span class="line" data-line="65">        else:</span>
+<span class="line" data-line="66">            data = str(item).encode("utf-8")</span>
+<span class="line" data-line="67"></span>
+<span class="line" data-line="68">        h1 = int.from_bytes(hashlib.sha256(data).digest(), 'big')</span>
+<span class="line" data-line="69">        h2 = int.from_bytes(hashlib.md5(data).digest(), 'big')</span>
+<span class="line" data-line="70"></span>
+<span class="line" data-line="71">        for i in range(self.k):</span>
+<span class="line" data-line="72">            yield (h1 + i * h2) % self.m</span>
+<span class="line" data-line="73"></span>
+<span class="line" data-line="74">    def add(self, item):</span>
+<span class="line" data-line="75">        """Ajoute un élément"""</span>
+<span class="line" data-line="76">        for idx in self._hashes(item):</span>
+<span class="line" data-line="77">            self.bitset.set(idx)</span>
+<span class="line" data-line="78">        self.count += 1</span>
+<span class="line" data-line="79"></span>
+<span class="line" data-line="80">    def __contains__(self, item) -> bool:</span>
+<span class="line" data-line="81">        """Teste si un élément est peut-être présent"""</span>
+<span class="line" data-line="82">        return all(self.bitset.get(idx) for idx in self._hashes(item))</span>
+<span class="line" data-line="83"></span>
+<span class="line" data-line="84">    def __len__(self):</span>
+<span class="line" data-line="85">        return self.count</span></code></pre>
+                </div>
+                
+                <!-- DROITE : Exécution étape par étape -->
+                <div class="execution-panel">
+                    <h3>⚡ Exécution Step-by-Step</h3>
+                    
+                    <!-- Contrôles de debug -->
+                    <div class="debug-controls">
+                        <button id="btn-debug-play" class="debug-btn" title="Lecture automatique">
+                            ▶️ Play
+                        </button>
+                        <button id="btn-debug-pause" class="debug-btn" title="Pause" disabled>
+                            ⏸️ Pause
+                        </button>
+                        <button id="btn-debug-step" class="debug-btn" title="Ligne suivante">
+                            ⏭️ Step
+                        </button>
+                        <button id="btn-debug-reset" class="debug-btn debug-btn-reset" title="Réinitialiser">
+                            🔄 Reset
+                        </button>
+                        <div class="debug-speed">
+                            <label>Vitesse:</label>
+                            <select id="debug-speed-select">
+                                <option value="0.5">Très lent</option>
+                                <option value="1" selected>Lent</option>
+                                <option value="1.5">Normal</option>
+                                <option value="2">Rapide</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Container pour les étapes (scrollable) -->
+                    <div class="exec-steps-container">
+                        <!-- Étape 1 : Init -->
+                        <div class="exec-step active" id="exec-step1">
+                        <div class="exec-header">
+                            <span class="exec-number">1️⃣</span>
+                            <span>Initialisation</span>
+                        </div>
+                        <div class="exec-controls">
+                            <input type="number" id="step1-n" value="100" min="10" max="1000" placeholder="n" style="width: 80px;">
+                            <input type="number" id="step1-p" value="0.01" min="0.001" max="0.1" step="0.001" placeholder="p" style="width: 80px;">
+                            <button id="btn-step1" class="btn-exec">▶️ bloom = BloomFilter(n, p)</button>
+                        </div>
+                        <div class="exec-command" id="command-step1">
+                            <code>>>> bloom = BloomFilter(100, 0.01)</code>
+                        </div>
+                        <div class="exec-output" id="output-step1">
+                            <div class="output-hint">👆 Cliquez pour exécuter</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Étape 2 : Add -->
+                    <div class="exec-step disabled" id="exec-step2">
+                        <div class="exec-header">
+                            <span class="exec-number">2️⃣</span>
+                            <span>Ajout d'éléments</span>
+                        </div>
+                        <div class="exec-controls">
+                            <input type="number" id="step2-count" value="50" min="1" max="1000" placeholder="nb mots" style="width: 100px;">
+                            <button id="btn-step2" class="btn-exec">▶️ bloom.add(words)</button>
+                        </div>
+                        <div class="exec-command" id="command-step2">
+                            <code>>>> for word in words[:50]: bloom.add(word)</code>
+                        </div>
+                        <div class="exec-output" id="output-step2"></div>
+                    </div>
+                    
+                    <!-- Étape 3 : Test -->
+                    <div class="exec-step disabled" id="exec-step3">
+                        <div class="exec-header">
+                            <span class="exec-number">3️⃣</span>
+                            <span>Test d'appartenance</span>
+                        </div>
+                        <div class="exec-controls">
+                            <input type="text" id="step3-word" value="python" placeholder="mot" style="width: 120px;">
+                            <button id="btn-step3" class="btn-exec">▶️ word in bloom</button>
+                            <button id="btn-show-words" class="btn-show-words" title="Afficher les mots ajoutés">📋 Voir les mots ajoutés</button>
+                        </div>
+                        <div class="exec-command" id="command-step3">
+                            <code>>>> "python" in bloom</code>
+                        </div>
+                        
+                        <!-- Liste des mots ajoutés (cachée par défaut) -->
+                        <div id="words-list-container" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 6px; max-height: 150px; overflow-y: auto;">
+                            <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; color: #43e97b;">
+                                📝 Mots ajoutés (<span id="words-count">0</span>) :
+                            </div>
+                            <div id="words-list" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+                        </div>
+                        
+                        <div class="exec-output" id="output-step3"></div>
+                    </div>
+                    </div><!-- Fin exec-steps-container -->
+                </div>
+            </div>
+        </div>
+        <!-- Slide 6: Conclusion -->
+        <div class="slide" id="slide6">
+            <h1 class="slide-title">✨ Conclusion</h1>
+            
+            <div class="conclusion-grid">
+                <div class="conclusion-box highlight">
+                    <h3>🎯 Points clés</h3>
+                    <ul>
+                        <li>Structure probabiliste <strong>ultra-compacte</strong></li>
+                        <li>Recherche en temps <strong>constant O(k)</strong></li>
+                        <li>Aucun faux négatif garanti</li>
+                        <li>Faux positifs contrôlables via <strong>p</strong></li>
+                    </ul>
+                </div>
+                
+                <div class="conclusion-box">
+                    <h3>✅ Quand l'utiliser ?</h3>
+                    <ul>
+                        <li>Pré-filtrage avant requête coûteuse</li>
+                        <li>Contraintes mémoire fortes</li>
+                        <li>Volume de données massif</li>
+                        <li>Faux positifs acceptables</li>
+                    </ul>
+                </div>
+                
+                <div class="conclusion-box">
+                    <h3>❌ Quand éviter ?</h3>
+                    <ul>
+                        <li>Besoin de suppression d'éléments</li>
+                        <li>Aucun faux positif toléré</li>
+                        <li>Petits ensembles de données</li>
+                        <li>Besoin de compter précisément</li>
+                    </ul>
+                </div>
+                
+                <div class="conclusion-box">
+                    <h3>🚀 Variantes avancées</h3>
+                    <ul>
+                        <li><strong>Counting Bloom Filter</strong>: suppression possible</li>
+                        <li><strong>Scalable Bloom Filter</strong>: capacité dynamique</li>
+                        <li><strong>Cuckoo Filter</strong>: meilleure performance</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="final-message">
+                <h2>🌸 Merci de votre attention !</h2>
+                <p class="subtitle">Questions ?</p>
+            </div>
+            
+            <div class="footer-info">
+                <p>Présentation interactive - Filtre de Bloom</p>
+                <p>Implémentation: Python + Flask + JavaScript</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button id="btn-prev" class="nav-btn">⬅️</button>
+        <span id="slide-counter">1 / 6</span>
+        <button id="btn-next" class="nav-btn">➡️</button>
+    </div>
+    
+    <!-- Keyboard hint -->
+    <div class="keyboard-hint">
+        Utilisez ← → ou cliquez sur les boutons pour naviguer
+    </div>
+
+    <script src="{{ url_for('static', filename='js/slides.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/debugger-demo.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+</body>
+</html>
