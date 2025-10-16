@@ -160,9 +160,9 @@
                                 <div class="hash-row">
                                     <span class="word-label chien">🐕 chien</span>
                                     <div class="hash-values">
-                                        <span class="hash-badge chien">h₁=5</span>
-                                        <span class="hash-badge chien">h₂=7</span>
-                                        <span class="hash-badge chien">h₃=14</span>
+                                        <span class="hash-badge chien">h₁=7</span>
+                                        <span class="hash-badge chien">h₂=14</span>
+                                        <span class="hash-badge chien">h₃=5</span>
                                     </div>
                                 </div>
                                 <div class="hash-row">
@@ -256,9 +256,9 @@
                             <div class="case-bits">
                                 <span class="check-bit fail">bit[3]=0 ✗</span>
                                 <span class="check-bit">bit[8]=0</span>
-                                <span class="check-bit">bit[13]=0</span>
+                                <span class="check-bit">bit[13]=1</span>
                             </div>
-                            <p class="case-result absent-result"><strong>Certainement absent</strong> ❌</p>
+                            <p class="case-result absent-result"><strong>Obligatoirement absent</strong> ❌</p>
                         </div>
                     </div>
                     
@@ -271,8 +271,8 @@
                         <div class="case-body">
                             <p class="case-check">h₁=0, h₂=7, h₃=14</p>
                             <div class="case-bits">
+                                <span class="check-bit ok">bit[2]=1 ✓</span>
                                 <span class="check-bit ok">bit[0]=1 ✓</span>
-                                <span class="check-bit ok">bit[7]=1 ✓</span>
                                 <span class="check-bit ok">bit[14]=1 ✓</span>
                             </div>
                             <p class="case-result fp-result"><strong>FAUX POSITIF</strong> ⚠️<br>
@@ -293,9 +293,16 @@
                     <div class="demonstration-section">
                         <h3>🔬 Démonstration : Probabilité de faux positif</h3>
                         
-                        <div class="demo-step">
-                            <p class="step-label">1️⃣ Probabilité qu'un bit reste à 0 après un hachage :</p>
-                            <p class="formula">$$P(\text{bit = 0 après 1 hash}) = 1 - \frac{1}{m}$$</p>
+                        <!-- Bloc 1 : Deux parties -->
+                        <div class="demo-step-double">
+                            <div class="demo-half">
+                                <p class="step-label">1️⃣ a) Proba de toucher un bit :</p>
+                                <p class="formula">$$P(\text{toucher bit i}) = \frac{1}{m}$$</p>
+                            </div>
+                            <div class="demo-half">
+                                <p class="step-label">1️⃣ b) Proba de NE PAS le toucher :</p>
+                                <p class="formula">$$P(\text{bit = 0}) = 1 - \frac{1}{m}$$</p>
+                            </div>
                         </div>
                         
                         <div class="demo-step">
@@ -304,33 +311,64 @@
                         </div>
                         
                         <div class="demo-step">
-                            <p class="step-label">3️⃣ Quand m est grand, approximation par exp :</p>
-                            <p class="formula">$$\lim_{m \to \infty} \left(1 - \frac{1}{m}\right)^{kn} = e^{-\frac{kn}{m}}$$</p>
-                        </div>
-                        
-                        <div class="demo-step">
-                            <p class="step-label">4️⃣ Probabilité qu'un bit soit à 1 :</p>
-                            <p class="formula">$$P(\text{bit = 1}) = 1 - e^{-\frac{kn}{m}}$$</p>
+                            <p class="step-label">3️⃣ Probabilité qu'un bit soit à 1 :</p>
+                            <p class="formula">$$P(\text{bit = 1}) = 1 - \left(1 - \frac{1}{m}\right)^{kn}$$</p>
                         </div>
                         
                         <div class="demo-step highlight">
-                            <p class="step-label">5️⃣ Faux positif = tous les k bits testés sont à 1 :</p>
-                            <p class="formula">$$P_{fp} = \left(1 - e^{-\frac{kn}{m}}\right)^k$$</p>
+                            <p class="step-label">4️⃣ Faux positif = tous les k bits testés sont à 1 :</p>
+                            <p class="formula">$$P_{fp} = \left[1 - \left(1 - \frac{1}{m}\right)^{kn}\right]^k$$</p>
                         </div>
-                    </div>
-                    
-                    <div class="formulas-compact">
-                        <div class="formula-mini">
-                            <strong>Taille optimale :</strong> $m = \frac{-n \ln(p)}{(\ln 2)^2}$
-                        </div>
-                        <div class="formula-mini">
-                            <strong>k optimal :</strong> $k = \frac{m}{n} \ln(2)$
+                        
+                        <!-- Approximation sur la même ligne (2 blocs côte à côte) -->
+                        <div class="demo-step-double">
+                            <div class="demo-half">
+                                <p class="step-label">5️⃣ Quand m est grand :</p>
+                                <p class="formula">$$\lim_{m \to \infty} \left(1 - \frac{1}{m}\right)^{kn} = e^{-\frac{kn}{m}}$$</p>
+                            </div>
+                            <div class="demo-half">
+                                <p class="step-label">6️⃣ Approximation finale :</p>
+                                <p class="formula">$$P_{fp} \approx \left(1 - e^{-\frac{kn}{m}}\right)^k$$</p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Colonne droite : Calculateur interactif -->
                 <div class="slide3-right">
+                    <!-- Bloc horizontal : Paramètres optimaux + Garantie -->
+                    <div class="top-info-double">
+                        <!-- Paramètres optimaux -->
+                        <div class="optimal-params-box">
+                            <h3>🎯 Paramètres Optimaux</h3>
+                            <p class="optimal-explanation">
+                                Par analyse de <strong>convexité</strong>, on minimise $P_{fp}$ :
+                            </p>
+                            <div class="optimal-formulas">
+                                <div class="formula-optimal">
+                                    <span class="formula-label">Taille optimale :</span>
+                                    <span class="formula-math">$m = \frac{-n \ln(p)}{(\ln 2)^2}$</span>
+                                </div>
+                                <div class="formula-optimal">
+                                    <span class="formula-label">Nombre optimal :</span>
+                                    <span class="formula-math">$k = \frac{m}{n} \ln(2)$</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Garantie : Pas de faux négatifs -->
+                        <div class="no-false-negative-box">
+                            <h3>✅ Garantie Mathématique</h3>
+                            <p class="guarantee-text">
+                                <strong class="highlight-guarantee">Aucun faux négatif !</strong>
+                            </p>
+                            <p class="guarantee-explanation">
+                                Si élément ajouté → k bits à 1<br>
+                                <span class="math-highlight">$P(\text{faux négatif}) = 0$</span>
+                            </p>
+                        </div>
+                    </div>
+                    
                     <div class="interactive-calculator">
                         <h3>🎛️ Calculateur interactif</h3>
                         

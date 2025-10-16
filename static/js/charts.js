@@ -29,20 +29,24 @@ function initMemoryErrorChart() {
     const ctx = document.getElementById('memoryErrorChart');
     if (!ctx) return;
 
-    // Données : taux d'erreur vs bits par élément
+    // Données : bits par élément vs taux d'erreur
     const errorRates = [0.001, 0.005, 0.01, 0.02, 0.05, 0.1];
     const bitsPerElement = errorRates.map(p => {
         // Formule : m/n = -ln(p) / (ln(2))^2
-        return (-Math.log(p) / (Math.log(2) ** 2)).toFixed(2);
+        return parseFloat((-Math.log(p) / (Math.log(2) ** 2)).toFixed(2));
     });
+
+    // Inverser l'ordre pour avoir du plus petit au plus grand
+    const reversedBits = [...bitsPerElement].reverse();
+    const reversedErrors = [...errorRates].reverse();
 
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: errorRates.map(p => (p * 100).toFixed(1) + '%'),
+            labels: reversedBits.map(b => b.toFixed(1)),
             datasets: [{
-                label: 'Bits par élément',
-                data: bitsPerElement,
+                label: 'Taux d\'erreur',
+                data: reversedErrors.map(p => (p * 100).toFixed(3)),
                 borderColor: '#ffd700',
                 backgroundColor: 'rgba(255, 215, 0, 0.2)',
                 borderWidth: 3,
@@ -69,7 +73,7 @@ function initMemoryErrorChart() {
                     bodyFont: { size: 13 },
                     callbacks: {
                         label: function(context) {
-                            return 'Mémoire: ' + context.parsed.y + ' bits/élément';
+                            return 'Taux d\'erreur: ' + context.parsed.y + '%';
                         }
                     }
                 }
@@ -78,7 +82,7 @@ function initMemoryErrorChart() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Taux d\'erreur (p)',
+                        text: 'Bits par élément',
                         font: { size: 12, weight: 'bold' },
                         color: '#ffd700'
                     },
@@ -89,14 +93,14 @@ function initMemoryErrorChart() {
                 y: {
                     title: {
                         display: true,
-                        text: 'Bits par élément',
+                        text: 'Taux d\'erreur (p) en %',
                         font: { size: 12, weight: 'bold' },
                         color: '#ffd700'
                     },
                     grid: {
                         color: 'rgba(255, 255, 255, 0.1)'
                     },
-                    beginAtZero: false
+                    beginAtZero: true
                 }
             }
         }
