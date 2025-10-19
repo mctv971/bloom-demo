@@ -35,6 +35,18 @@ class BitSet:
         for i in range(len(self.array)):
             self.array[i] = 0
 
+    def bit_count(self) -> int:
+        """Retourne le nombre total de bits à 1"""
+        return sum(bin(byte).count("1") for byte in self.array)
+
+    def size_in_bits(self) -> int:
+        """Retourne la taille totale (en bits)"""
+        return self.size
+
+    def fill_ratio(self) -> float:
+        """Retourne le taux de remplissage (entre 0 et 1)"""
+        return self.bit_count() / self.size if self.size else 0.0
+
 
 import math, hashlib
 
@@ -84,3 +96,23 @@ class BloomFilter:
 
     def __len__(self):
         return self.count
+    
+    def bit_count(self) -> int:
+        """Retourne le nombre total de bits à 1 dans le filtre"""
+        return self.bitset.bit_count()
+
+    def fill_ratio(self) -> float:
+        """Taux de remplissage du filtre (entre 0 et 1)"""
+        return self.bitset.fill_ratio()
+
+    def stats(self) -> dict:
+        """Retourne un résumé global du filtre"""
+        return {
+            "capacity": self.capacity,
+            "error_rate": self.error_rate,
+            "bits_total": self.m,
+            "bits_on": self.bit_count(),
+            "fill_ratio": round(self.fill_ratio() * 100, 2),
+            "hash_functions": self.k,
+            "elements_added": self.count
+        }

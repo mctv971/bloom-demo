@@ -317,8 +317,14 @@ async function displayDebugResult2(count) {
     try {
         const response = await fetch('/api/bitset_state');
         const bitsetData = await response.json();
+
+        const response2 = await fetch('/api/bloom_stats');
+        const bitstat_json = await response2.json();
+        const bitstat = bitstat_json.stats;
+
+        console.log("bitstat:", bitstat);
         
-        const fillRate = ((bitsetData.ones_count / bitsetData.total_size) * 100).toFixed(2);
+        const fillRate = bitstat.fill_ratio.toFixed(2);
         const sampleSize = Math.min(200, bitsetData.bitset.length);
         const sampleBits = bitsetData.bitset.slice(0, sampleSize);
         
@@ -331,7 +337,7 @@ async function displayDebugResult2(count) {
                     📊 Taux de remplissage: <strong>${fillRate}%</strong>
                 </div>
                 <div style="font-size: 0.8rem; opacity: 0.8;">
-                    Bits à 1: ${bitsetData.ones_count} / ${bitsetData.total_size}
+                    Bits à 1: ${bitstat.bits_on} / ${bitstat.bits_total} bits
                 </div>
                 <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 10px;">Aperçu BitSet (premiers ${sampleSize} bits):</div>
                 <div style="display: flex; flex-wrap: wrap; gap: 2px; margin-top: 8px;">

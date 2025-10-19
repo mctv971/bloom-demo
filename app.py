@@ -153,8 +153,20 @@ def bitset_state():
         "sample_size": sample_size,
         "total_size": bloom_filter.m,
         "ones_count": ones_count,
-        "fill_ratio": fill_ratio
+        "fill_rate": fill_ratio
     })
+
+@app.route('/api/bloom_stats', methods=['GET'])
+def bloom_stats():
+    """Retourne les statistiques du BloomFilter"""
+    global bloom_filter
+    
+    if bloom_filter is None:
+        return jsonify({"success": False, "error": "Filtre non initialisé"}), 400
+    
+    stats = bloom_filter.stats()
+    print("BloomFilter stats:", stats)
+    return jsonify({"success": True, "stats": stats})
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
